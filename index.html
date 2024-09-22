@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>剪刀石頭布遊戲</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            position: relative;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .button-container {
+            display: flex;
+        }
+        .button {
+            padding: 20px 30px;
+            margin: 10px;
+            font-size: 40px;
+            cursor: pointer;
+            border: 2px solid black;
+            border-radius: 5px;
+            color: white;
+            background-color: gray;
+            transition: transform 0.2s, background-color 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .button:hover {
+            transform: scale(1.1);
+            background-color: green;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 24px;
+        }
+        .index {
+            color: black;
+        }
+        .win {
+            color: green;
+        }
+        .lose {
+            color: red;
+        }
+        .draw {
+            color: orange;
+        }
+        #score {
+            margin-top: 20px;
+            font-size: 20px;
+        }
+        #music-control {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 24px;
+            border-radius: 50%;
+            padding: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s; /* 添加過渡效果 */
+        }
+        #music-control:hover {
+            transform: scale(1.1); /* 懸停時放大 */
+        }
+    </style>
+</head>
+<body>
+
+    <button id="music-control" onclick="toggleMute()">
+        <i class="fas fa-volume-up" id="music-icon"></i>
+    </button>
+
+    <h1>剪刀石頭布遊戲</h1>
+    <div class="button-container">
+        <button class="button" onclick="play('scissors')"><i class="fas fa-cut"></i></button>
+        <button class="button" onclick="play('rock')"><i class="fas fa-hand-rock"></i></button>
+        <button class="button" onclick="play('paper')"><i class="fas fa-hand-paper"></i></button>
+    </div>
+    
+    <div id="result" class="index">猜拳結果</div>
+    <div id="score">玩家勝: 0 | 電腦勝: 0 | 平手: 0</div>
+
+    <audio id="winSound" src="win.mp3"></audio> <!-- 贏的音樂 -->
+    <audio id="loseSound" src="lose.mp3"></audio> <!-- 輸的音樂 -->
+    <audio id="drawSound" src="draw.mp3"></audio> <!-- 平手的音樂 -->
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let playerWins = 0;
+        let computerWins = 0;
+        let draws = 0;
+
+        const winSound = document.getElementById('winSound');
+        const loseSound = document.getElementById('loseSound');
+        const drawSound = document.getElementById('drawSound');
+
+        winSound.volume = 0.5; 
+        loseSound.volume = 0.3; 
+        drawSound.volume = 0.5; 
+
+        let lastResult = ''; 
+        let isMuted = false; 
+
+        function play(playerChoice) {
+            const choices = ['rock', 'scissors', 'paper'];
+            const computerChoice = choices[Math.floor(Math.random() * choices.length)];
+            let result = '';
+
+            const choicesInChinese = {
+                rock: '石頭',
+                scissors: '剪刀',
+                paper: '布'
+            };
+            
+            const playerChoiceInChinese = choicesInChinese[playerChoice];
+            const computerChoiceInChinese = choicesInChinese[computerChoice];
+
+            if (playerChoice === computerChoice) {
+                result = '平手！';
+                draws++;
+                document.getElementById('result').className = 'draw';
+
+                if (lastResult !== 'draw') {
+                    stopAllSounds(); 
+                    if (!isMuted) drawSound.play(); 
+                }
+            } else if (
+                (playerChoice === 'rock' && computerChoice === 'scissors') ||
+                (playerChoice === 'scissors' && computerChoice === 'paper') ||
+                (playerChoice === 'paper' && computerChoice === 'rock')
+            ) {
+                result = '你贏了！';
+                playerWins++;
+                document.getElementById('result').className = 'win';
+
+                if (lastResult !== 'win') {
+                    stopAllSounds(); 
+                    if (!isMuted) winSound.play(); 
+                }
+            } else {
+                result = '你輸了！';
+                computerWins++;
+                document.getElementById('result').className = 'lose';
+
+                if (lastResult !== 'lose') {
+                    stopAllSounds(); 
+                    if (!isMuted) loseSound.play(); 
+                }
+            }
+
+            document.getElementById('result').innerText = `你選擇了 ${playerChoiceInChinese}，電腦選擇了 ${computerChoiceInChinese}：${result}`;
+            document.getElementById('score').innerText = `玩家勝: ${playerWins} | 電腦勝: ${computerWins} | 平手: ${draws}`;
+
+            lastResult = result; 
+            checkForWinner();
+        }
+
+        function stopAllSounds() {
+            winSound.pause();
+            loseSound.pause();
+            drawSound.pause();
+            winSound.currentTime = 0; 
+            loseSound.currentTime = 0;
+            drawSound.currentTime = 0;
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted; 
+            const musicIcon = document.getElementById('music-icon');
+            if (isMuted) {
+                musicIcon.classList.remove('fa-volume-up');
+                musicIcon.classList.add('fa-volume-mute');
+                stopAllSounds(); 
+            } else {
+                musicIcon.classList.remove('fa-volume-mute');
+                musicIcon.classList.add('fa-volume-up');
+            }
+        }
+
+        function checkForWinner() {
+            if (playerWins === 3) {
+                Swal.fire({
+                    title: '恭喜！',
+                    text: '玩家獲得了勝利！',
+                    icon: 'success',
+                    confirmButtonText: '重新開始',
+                }).then(() => {
+                    resetGame();
+                });
+            } else if (computerWins === 3) {
+                Swal.fire({
+                    title: '哦不！',
+                    text: '電腦獲得了勝利！',
+                    icon: 'error',
+                    confirmButtonText: '重新開始',
+                }).then(() => {
+                    resetGame();
+                });
+            }
+        }
+
+        function resetGame() {
+            playerWins = 0;
+            computerWins = 0;
+            draws = 0;
+
+            stopAllSounds(); 
+            document.getElementById('result').className = 'index';
+            document.getElementById('result').innerText = '猜拳結果';
+            document.getElementById('score').innerText = `玩家勝: ${playerWins} | 電腦勝: ${computerWins} | 平手: ${draws}`;
+        }
+    </script>
+
+</body>
+</html>
